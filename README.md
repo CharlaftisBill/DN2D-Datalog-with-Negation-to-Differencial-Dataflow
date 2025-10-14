@@ -14,7 +14,7 @@ This study seeks to translate recursive Datalog programs that support negation i
 
 ## Learning Material:
 * [Intro to DDlog](https://chasewilson.dev/blog/intro-to-ddlog/)
-* [Incremental Static Analysis with Differential Datalog](./papers/Incremental Static Analysis with Differential Datalog.pdf)
+* [Incremental Static Analysis with Differential Datalog](papers/Incremental Static Analysis with Differential Datalog.pdf)
 
 ## Related Implementations:
 

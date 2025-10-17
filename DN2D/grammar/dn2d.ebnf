@@ -1,0 +1,122 @@
+(* ========================================================== *)
+(*                     TOP-LEVEL STRUCTURE                    *)
+(* ========================================================== *)
+
+Program            = { Statement } ;
+
+Statement          = Rule
+                   | Fact
+                   | ReadDirective
+                   | WriteDirective
+                   | IterationBlock
+                   | Comment ;
+
+
+(* ========================================================== *)
+(*              OPERATIONAL DIRECTIVES & BLOCKS               *)
+(* ========================================================== *)
+
+(* .read Edge(source, target) from "edges.csv" as "csv". *)
+ReadDirective      = ".read", Identifier, "(", [ Identifier, { ",", Identifier } ], ")",
+                     "from", String, [ FormatSpecifier ], "." ;
+
+(* .write FinalPaths to "output.csv" as "csv_with_header". *)
+WriteDirective     = ".write", Identifier, "to", String, [ FormatSpecifier ], "." ;
+
+(* .iterate { ... rules ... } *)
+IterationBlock     = ".iterate", "{", { Rule | Comment }, "}" ;
+
+(* as "csv", as "jsonl", etc. *)
+FormatSpecifier    = "as", String ;
+
+
+(* ========================================================== *)
+(*                LOGICAL PRODUCTIONS (DATALOG CORE)          *)
+(* ========================================================== *)
+
+(* Path(x, z) :- Edge(x, y), Path(y, z). *)
+Rule               = Head, ":-", Body, "." ;
+Head               = Atom ;
+Body               = Literal, { ",", Literal } ;
+
+(* Edge(1, 2). *)
+Fact               = GroundAtom, "." ;
+
+
+(* ========================================================== *)
+(*                        CORE COMPONENTS                     *)
+(* ========================================================== *)
+
+(* A component of a rule body, can be an atom, a negated atom, or a condition. *)
+Literal            = [ "not" | "!" ], Atom
+                   | Condition ;
+
+(* A named predicate with terms, e.g., Edge(x, y) or Result(x, count(y)) *)
+Atom               = Identifier, "(", [ Term, { ",", Term } ], ")" ;
+
+(* A fact is an atom with no variables, e.g., Edge(1, 2) *)
+GroundAtom         = Identifier, "(", [ Constant, { ",", Constant } ], ")" ;
+
+(* A term can be a variable, a constant, or a complex expression. *)
+Term               = Expression ;
+
+(* A filter condition in the rule body, e.g., x > 10 *)
+Condition          = Expression ;
+
+
+(* ========================================================== *)
+(*              EXPRESSIONS & AGGREGATIONS                    *)
+(* ========================================================== *)
+
+(* Grammar expressions are ordered by precedence, from lowest to highest. *)
+Expression         = Comparison ;
+Comparison         = Additive, [ ComparisonOperator, Additive ] ;
+Additive           = Multiplicative, { AdditiveOperator, Multiplicative } ;
+Multiplicative     = Unary, { MultiplicativeOperator, Unary } ;
+Unary              = [ AdditiveOperator ], Primary ;
+
+Primary            = Constant
+                   | Variable
+                   | Wildcard
+                   | AggregateFunctionCall
+                   | "(", Expression, ")" ;
+
+(* An aggregate function call, only valid in the head of a rule. *)
+AggregateFunctionCall = AggregateFunction, "(", [ Variable ], ")" ;
+AggregateFunction     = "count" | "sum" | "min" | "max" | "avg" ;
+
+
+(* ========================================================== *)
+(*               LEXICAL TOKENS (TERMINALS)                   *)
+(* ========================================================== *)
+
+(* Note: By convention, relation names start with a capital letter (PascalCase). *)
+Identifier         = Letter, { Letter | Digit | "_" } ;
+
+(* Note: By convention, variables start with a lowercase letter or are single letters. *)
+Variable           = Letter, { Letter | Digit | "_" } ;
+
+(* The "don't care" wildcard. *)
+Wildcard           = "_" ;
+
+(* Different types of constant values. *)
+Constant           = String | Integer | Float | Boolean ;
+Integer            = [ "-" ], Digit, { Digit } ;
+Float              = [ "-" ], Digit, { Digit }, ".", Digit, { Digit } ;
+String             = '"', { ANY_CHAR_EXCEPT_DOUBLE_QUOTE }, '"' ;
+Boolean            = "true" | "false" ;
+
+(* Operators used in expressions. *)
+ComparisonOperator = "==" | "!=" | "<" | "<=" | ">" | ">=" ;
+AdditiveOperator   = "+" | "-" ;
+MultiplicativeOperator = "*" | "/" | "%" ;
+
+(* Basic character classes. *)
+Letter             = "a"..."z" | "A"..."Z" ;
+Digit              = "0"..."9" ;
+
+(* Whitespace is ignored between tokens by the parser/lexer. *)
+Whitespace         = ( " " | "\t" | "\n" | "\r" )+ ;
+
+(* Comments start with # and extend to the end of the line. *)
+Comment            = "#", { ANY_CHAR_UNTIL_NEWLINE } ;

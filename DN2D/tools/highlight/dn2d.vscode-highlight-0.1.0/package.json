@@ -1,0 +1,37 @@
+{
+  "name": "vscode-dn2d-highlight",
+  "displayName": "DN2D Syntax Highlighting",
+  "description": "Syntax highlighting for the DN2D Datalog language.",
+  "version": "0.1.0",
+  "publisher": "YourName",
+  "engines": {
+    "vscode": "^1.50.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "dn2d",
+        "aliases": [
+          "DN2D",
+          "dn2d"
+        ],
+        "extensions": [
+          ".datalog",
+          ".dl",
+          ".dn2d"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "dn2d",
+        "scopeName": "source.dn2d",
+        "path": "./dn2d.tmLanguage.json"
+      }
+    ]
+  }
+}

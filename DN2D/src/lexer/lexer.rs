@@ -1,72 +1,6 @@
-// src/lexer.rs
+use std::{iter::Peekable, str::Chars};
 
-use std::fmt;
-use std::iter::Peekable;
-use std::str::Chars;
-
-// ==========================================================
-//                  1. DATA STRUCTURES
-// ==========================================================
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct Span {
-    pub line: usize,
-    pub start: usize,
-    pub end: usize,
-}
-
-impl Span {
-    pub fn new(line: usize, start: usize, end: usize) -> Self {
-        Span { line, start, end }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum TokenKind {
-    Read, Write, Iterate, As, From, To, Not,
-    LParen, RParen, LBrace, RBrace, Comma, Dot, ColonDash, Wildcard,
-    Eq, NotEq, Lt, LtEq, Gt, GtEq, Plus, Minus, Star, Slash, Percent, Bang,
-    Identifier(String),
-    Integer(i64),
-    Float(f64),
-    String(String),
-    Boolean(bool),
-    Eof,
-    Illegal,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct Token {
-    pub kind: TokenKind,
-    pub span: Span,
-}
-
-impl Token {
-    pub fn new(kind: TokenKind, span: Span) -> Self {
-        Token { kind, span }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct LexerError {
-    pub message: String,
-    pub span: Span,
-}
-
-impl fmt::Display for LexerError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "Lexer Error at Line {}, Col {}-{}: {}",
-            self.span.line, self.span.start, self.span.end, self.message
-        )
-    }
-}
-impl std::error::Error for LexerError {}
-
-// ==========================================================
-//                      2. LEXER STRUCT
-// ==========================================================
+use crate::lexer::{LexerError, Span, Token, TokenKind};
 
 pub struct Lexer<'a> {
     source: &'a str,
@@ -75,10 +9,6 @@ pub struct Lexer<'a> {
     line: usize,
     line_start_pos: usize,
 }
-
-// ==========================================================
-//                    3. LEXER IMPLEMENTATION
-// ==========================================================
 
 impl<'a> Lexer<'a> {
     pub fn new(source: &'a str) -> Self {
@@ -93,8 +23,9 @@ impl<'a> Lexer<'a> {
 
     fn next_token(&mut self) -> Result<Token, LexerError> {
         self.skip_whitespace_and_comments();
-        let start_pos = self.pos;
+
         let start_col = self.column();
+        let start_pos = self.position();
 
         let Some(ch) = self.next_char() else {
             let span = Span::new(self.line, start_col, start_col);
@@ -113,27 +44,42 @@ impl<'a> Lexer<'a> {
             '*' => TokenKind::Star,
             '/' => TokenKind::Slash,
             '%' => TokenKind::Percent,
-            ':' => match self.peek() {
-                Some('-') => { self.next_char(); TokenKind::ColonDash },
+            ':' => match self.chars.peek() {
+                Some('-') => {
+                    self.next_char();
+                    TokenKind::ColonDash
+                },
                 _ => TokenKind::Illegal,
             },
-            '!' => match self.peek() {
-                Some('=') => { self.next_char(); TokenKind::NotEq },
+            '!' => match self.chars.peek() {
+                Some('=') => {
+                    self.next_char();
+                    TokenKind::NotEq
+                },
                 _ => TokenKind::Bang,
             },
-            '=' => match self.peek() {
-                Some('=') => { self.next_char(); TokenKind::Eq },
+            '=' => match self.chars.peek() {
+                Some('=') => {
+                    self.next_char();
+                    TokenKind::Eq
+                },
                 _ => TokenKind::Illegal,
             },
-            '<' => match self.peek() {
-                Some('=') => { self.next_char(); TokenKind::LtEq },
+            '<' => match self.chars.peek() {
+                Some('=') => {
+                    self.next_char();
+                    TokenKind::LtEq
+                },
                 _ => TokenKind::Lt,
             },
-            '>' => match self.peek() {
-                Some('=') => { self.next_char(); TokenKind::GtEq },
+            '>' => match self.chars.peek() {
+                Some('=') => {
+                    self.next_char();
+                    TokenKind::GtEq
+                },
                 _ => TokenKind::Gt,
             },
-            '.' => match self.peek() {
+            '.' => match self.chars.peek() {
                 Some(c) if c.is_alphabetic() => self.read_directive()?,
                 _ => TokenKind::Dot,
             }
@@ -145,7 +91,7 @@ impl<'a> Lexer<'a> {
 
         let span = Span::new(self.line, start_col, self.column() - 1);
         if kind == TokenKind::Illegal {
-            let message = format!("Unrecognized character '{}'", &self.source[start_pos..self.pos]);
+            let message = format!("Unrecognized character '{}'", &self.source[start_pos..self.position()]);
             Err(LexerError { message, span })
         } else {
             Ok(Token::new(kind, span))
@@ -157,8 +103,8 @@ impl<'a> Lexer<'a> {
         self.chars.next()
     }
 
-    fn peek(&mut self) -> Option<&char> {
-        self.chars.peek()
+    fn position(&mut self) -> usize {
+        self.pos
     }
 
     fn column(&self) -> usize {
@@ -167,17 +113,17 @@ impl<'a> Lexer<'a> {
 
     fn skip_whitespace_and_comments(&mut self) {
         loop {
-            match self.peek() {
+            match self.chars.peek() {
                 Some(&c) if c.is_whitespace() => {
                     self.next_char();
                     if c == '\n' {
                         self.line += 1;
-                        self.line_start_pos = self.pos;
+                        self.line_start_pos = self.position();
                     }
                 }
-                Some('#') => {
+                Some(&'#') => {
                     self.next_char();
-                    while let Some(&c) = self.peek() {
+                    while let Some(&c) = self.chars.peek() {
                         if c == '\n' { break; }
                         self.next_char();
                     }
@@ -188,29 +134,35 @@ impl<'a> Lexer<'a> {
     }
     
     fn read_identifier_or_keyword(&mut self, first: char) -> TokenKind {
+
         let mut ident = String::new();
         ident.push(first);
-        while let Some(&c) = self.peek() {
+
+        while let Some(&c) = self.chars.peek() {
             if c.is_alphanumeric() || c == '_' {
                 ident.push(self.next_char().unwrap());
             } else {
                 break;
             }
         }
+
         match ident.as_str() {
-            "as" => TokenKind::As, "from" => TokenKind::From, "to" => TokenKind::To,
-            "not" => TokenKind::Not, "true" => TokenKind::Boolean(true),
-            "false" => TokenKind::Boolean(false), _ => TokenKind::Identifier(ident),
+            "from"  => TokenKind::From,
+            "to"    => TokenKind::To,
+            "as"    => TokenKind::As,
+            "not"   => TokenKind::Not,
+            "true"  => TokenKind::Boolean(true),
+            "false" => TokenKind::Boolean(false),
+            _       => TokenKind::Identifier(ident)
         }
     }
 
-    // ==========================================================
-    // THIS IS THE CORRECTED FUNCTION
-    // ==========================================================
     fn read_directive(&mut self) -> Result<TokenKind, LexerError> {
-        // First, get the character. The mutable borrow on `self` for next_char() ends here.
+        
+        // The mutable borrow on `self` for next_char() ends here (unwrap).
         let first_char = self.next_char().unwrap();
-        // Then, pass the character's value. A new mutable borrow for read_identifier_or_keyword() starts here.
+
+        // New mutable borrow starts here.
         let directive = self.read_identifier_or_keyword(first_char);
         
         match directive {
@@ -228,18 +180,35 @@ impl<'a> Lexer<'a> {
     }
     
     fn read_number(&mut self, first: char) -> Result<TokenKind, LexerError> {
+
         let mut num_str = String::new();
         num_str.push(first);
-        while let Some(&c) = self.peek() { if c.is_digit(10) { num_str.push(self.next_char().unwrap()); } else { break; } }
-        if let Some('.') = self.peek() {
-            if let Some(next_c) = self.source.chars().nth(self.pos + 1) {
+        
+        while let Some(&c) = self.chars.peek() {
+            if c.is_digit(10) {
+                num_str.push(self.next_char().unwrap());
+            } else {
+                break;
+            }
+        }
+        
+        if let Some('.') = self.chars.peek() {
+            if let Some(next_c) = self.source.chars().nth(self.position() + 1) {
                  if next_c.is_digit(10) {
                     num_str.push(self.next_char().unwrap());
-                    while let Some(&c) = self.peek() { if c.is_digit(10) { num_str.push(self.next_char().unwrap()); } else { break; } }
+
+                    while let Some(&c) = self.chars.peek() {
+                        if c.is_digit(10) {
+                            num_str.push(self.next_char().unwrap());
+                        } else {
+                            break;
+                        }
+                    }
                     return Ok(TokenKind::Float(num_str.parse().unwrap()));
                 }
             }
         }
+
         Ok(TokenKind::Integer(num_str.parse().unwrap()))
     }
 
@@ -259,10 +228,6 @@ impl<'a> Lexer<'a> {
         Ok(TokenKind::String(s))
     }
 }
-
-// ==========================================================
-//                   4. ITERATOR IMPLEMENTATION
-// ==========================================================
 
 impl<'a> Iterator for Lexer<'a> {
     type Item = Result<Token, LexerError>;

@@ -6,7 +6,7 @@ pub type ParseResult<T> = Result<T, ParserError>;
 
 pub struct Parser<'a> {
     pub(crate) tokens: Peekable<vec::IntoIter<Token>>,
-    source: &'a str,
+    pub source: &'a str,
 }
 
 impl<'a> Parser<'a> {
@@ -17,14 +17,21 @@ impl<'a> Parser<'a> {
         }
     }
 
+    pub fn source_line(&self, token: &Token) -> String {
+        self.source.lines().nth(token.span.line).unwrap().to_string()
+    }
+
     pub fn parse_list<T, F>(&mut self, mut parse_fn: F) -> ParseResult<Vec<T>>
     where F: FnMut(&mut Self) -> ParseResult<T> {
+
         let mut items = Vec::new();
         items.push(parse_fn(self)?);
+
         while self.peek_is(&TokenKind::Comma)? {
             self.consume();
             items.push(parse_fn(self)?);
         }
+        
         Ok(items)
     }
 
@@ -63,12 +70,21 @@ impl<'a> Parser<'a> {
     }
         
     pub fn eof_error(&self, message: &str) -> ParserError {
-        ParserError { message: message.to_string(), span: Span { line: 0, start: 0, end: 0 } }
+        ParserError {
+            message: message.to_string(),
+            line_ref: "".to_string(),
+            span: Span {
+                line: 0,
+                start: 0,
+                end: 0
+            }
+        }
     }
 
     pub fn unexpected_token_error(&self, token: &Token, expected: &str) -> ParserError {
         ParserError {
             message: format!("Unexpected token '{:?}', expected {}", token.kind, expected),
+            line_ref: self.source_line(token),
             span: token.span,
         }
     }

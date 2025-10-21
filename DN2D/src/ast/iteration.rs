@@ -23,7 +23,6 @@ impl Parsable<IterationBlock> for IterationBlock {
     }
 }
 
-
 #[derive(Debug, Serialize)]
 pub struct GroundAtom {
     pub name: Identifier,

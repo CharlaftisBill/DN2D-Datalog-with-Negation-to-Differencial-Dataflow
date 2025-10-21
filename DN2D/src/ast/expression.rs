@@ -22,8 +22,7 @@ pub enum Expression {
 
 impl Parsable<Expression> for Expression {
     fn parse(parser :&mut Parser<'_>) -> ParseResult<Expression> {
-        // parser.parse_comparison()
-        Expression::parse_comparison(parser) // <---
+        Expression::parse_comparison(parser)
     }
 }
 
@@ -106,11 +105,11 @@ impl Expression{
             || parser.eof_error("Expected a primary expression")
         )?;
         
-        match token.kind {
-            TokenKind::Integer(i) => Ok(Expression::Constant(Constant::Integer(i))),
-            TokenKind::Float(f) => Ok(Expression::Constant(Constant::Float(f))),
-            TokenKind::String(s) => Ok(Expression::Constant(Constant::String(s))),
-            TokenKind::Boolean(b) => Ok(Expression::Constant(Constant::Boolean(b))),
+        match &token.kind {
+            TokenKind::Integer(i) => Ok(Expression::Constant(Constant::Integer(*i))),
+            TokenKind::Float(f) => Ok(Expression::Constant(Constant::Float(*f))),
+            TokenKind::String(s) => Ok(Expression::Constant(Constant::String(s.clone()))),
+            TokenKind::Boolean(b) => Ok(Expression::Constant(Constant::Boolean(*b))),
             TokenKind::Identifier(name) => {
                 
                 if parser.peek_is(&TokenKind::LParen)? {
@@ -126,11 +125,17 @@ impl Expression{
                         "min" => AggregateFunction::Min,
                         "max" => AggregateFunction::Max,
                         "avg" => AggregateFunction::Avg,
-                        _ => return Err(ParserError { message: format!("Unknown aggregate function '{}'", name), span: token.span })
+                        _ => return Err(
+                            ParserError {
+                                message: format!("Unknown aggregate function '{}'", name),
+                                line_ref: parser.source_line(&token),
+                                span: token.span
+                            }
+                        )
                     };
                     Ok(Expression::Aggregate(Aggregate { func, arg }))
                 } else {
-                    Ok(Expression::Variable(Identifier(name)))
+                    Ok(Expression::Variable(Identifier(name.clone())))
                 }
             }
             TokenKind::Wildcard => Ok(Expression::Wildcard),

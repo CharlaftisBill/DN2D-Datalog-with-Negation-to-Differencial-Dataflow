@@ -1,8 +1,10 @@
 use std::fmt;
 
+use serde::Serialize;
+
 use super::span::Span;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
 pub enum TokenKind {
     Read, From,
     Write, To, As,
@@ -18,7 +20,7 @@ pub enum TokenKind {
     Illegal,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct Token {
     pub kind: TokenKind,
     pub span: Span,

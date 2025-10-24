@@ -18,9 +18,9 @@ impl std::fmt::Display for ParserError {
             txt_pointer.push_str("\n");
             txt_pointer.push_str(&" ".repeat(self.span.start -1));
             
-            if self.span.start != self.span.end {
+            if self.span.start >= 2 && self.span.start != self.span.end {
                 txt_pointer.push_str(&"┗");
-                txt_pointer.push_str(&"━".repeat(self.span.start -2 ));
+                txt_pointer.push_str(&"━".repeat(self.span.start -2));
                 txt_pointer.push_str(&"┛");
             } else {
                 txt_pointer.push_str(&"┻");

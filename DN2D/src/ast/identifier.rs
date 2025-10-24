@@ -16,7 +16,7 @@ impl Parsable<Identifier> for Identifier {
         if let TokenKind::Identifier(name) = token.kind {
             Ok(Identifier(name))
         } else {
-            Err(parser.unexpected_token_error(&token, "an identifier"))
+            Err(parser.unexpected_token_error(&token, " an identifier"))
         }
     }
 }

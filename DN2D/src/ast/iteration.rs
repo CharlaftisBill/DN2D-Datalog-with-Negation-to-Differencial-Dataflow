@@ -1,10 +1,10 @@
 use serde::Serialize;
 
-use crate::{ast::{parser::ParseResult, Constant, Identifier, Parsable, Parser, Rule}, lexer::TokenKind};
+use crate::{ast::{parser::ParseResult, Parsable, Parser, RuleOrFact}, lexer::TokenKind};
 
 #[derive(Debug, Serialize)]
 pub struct IterationBlock {
-    pub rules: Vec<Rule>,
+    pub rules: Vec<RuleOrFact>,
 }
 
 impl Parsable<IterationBlock> for IterationBlock {
@@ -15,33 +15,10 @@ impl Parsable<IterationBlock> for IterationBlock {
         let mut rules = Vec::new();
 
         while parser.peek_is_not(&TokenKind::RBrace)? {
-            rules.push(Rule::parse(parser)?);
+            rules.push(RuleOrFact::parse(parser)?);
         }
         parser.expect(TokenKind::RBrace)?;
         
         Ok(IterationBlock { rules })
-    }
-}
-
-#[derive(Debug, Serialize)]
-pub struct GroundAtom {
-    pub name: Identifier,
-    pub values: Vec<Constant>,
-}
-
-impl Parsable<GroundAtom> for GroundAtom {
-    fn parse(parser :&mut Parser<'_>) -> ParseResult<GroundAtom> {
-        
-        let name = Identifier::parse(parser)?;
-        parser.expect(TokenKind::LParen)?;
-
-        let values = if parser.peek_is_not(&TokenKind::RParen)? {
-            parser.parse_list(Constant::parse)?
-        } else {
-            Vec::new()
-        };
-
-        parser.expect(TokenKind::RParen)?;
-        Ok(GroundAtom { name, values })
     }
 }

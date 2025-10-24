@@ -1,0 +1,26 @@
+# ==========================================================
+# Example 4: Negation and Joins
+# ==========================================================
+
+# 1. Read the input data.
+.read Student(id, name, major) from "students.csv" as "csv".
+.read Enrolled(student_id, course_code) from "enrollments.csv" as "csv".
+
+# 2. Create an intermediate relation for all CS majors.
+# This makes the final rule cleaner and easier to read.
+CS_Major(id) :- Student(id, _, "CS").
+
+# 3. Create an intermediate relation for students in CS101.
+Enrolled_CS101(id) :- Enrolled(id, "CS101").
+
+# 4. The main logic.
+# Find students who are in the Enrolled_CS101 set but NOT in the CS_Major set.
+# The 'not' literal checks for the non-existence of a fact.
+NonCS_In_CS101(id) :- Enrolled_CS101(id), not CS_Major(id).
+
+# 5. Produce the final report with student names.
+# This joins the result back with the original Student data to get the names.
+FinalReport(id, name) :- NonCS_In_CS101(id), Student(id, name, _).
+
+# 6. Write the final output.
+.write FinalReport to "/etc/cs101_non_majors.txt" as "txt".

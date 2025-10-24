@@ -1,0 +1,21 @@
+# ==========================================================
+# Example 3: Aggregation and Arithmetic
+# ==========================================================
+
+# Load sales data.
+.read Sale(item, category, quantity, unit_price) from "sales.csv" as "csv".
+
+# Rule with Aggregation.
+# Find total items sold and total revenue for each category.
+# The grouping is implicit: the rule groups by all variables in the head
+# that are NOT inside an aggregate function (in this case, 'cat').
+CategorySummary(cat, count(item), sum(quantity * unit_price)) :- Sale(item, cat, quantity, unit_price).
+
+# Rule with an arithmetic condition in the body.
+# An order is "high-value" if its total price (quantity * price) exceeds 500.
+# We use the wildcard "_" because we don't care about the category here.
+HighValueOrder(item, quantity * unit_price) :- Sale(item, _, quantity, unit_price), (quantity * unit_price) > 500.
+
+# Write out the results.
+.write CategorySummary to "category_summary.csv" as "csv_with_header".
+.write HighValueOrder to "io::stdout" as "table".

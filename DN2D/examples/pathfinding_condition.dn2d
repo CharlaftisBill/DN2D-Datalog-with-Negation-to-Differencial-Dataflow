@@ -1,4 +1,4 @@
-.read Edge(s, d) from "graph.csv" as "csv".
+.read Edge(s, d) from "./inputs/graph_edges.csv" as "csv".
 
 .iterate {
     Path(x, y) :- Edge(x, y).
@@ -6,4 +6,5 @@
 }
 
 Degree(node, count(edge)) :- Edge(node, edge).
-.write Degree to "degrees.csv" as "csv_with_header".
+
+.write Degree to "/tmp/degrees.csv" as "csv_with_header".

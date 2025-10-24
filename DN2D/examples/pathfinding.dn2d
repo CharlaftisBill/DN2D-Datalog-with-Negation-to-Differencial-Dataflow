@@ -1,0 +1,24 @@
+# ==========================================================
+# Example 2: Graph Pathfinding (Transitive Closure)
+# ==========================================================
+
+# Use a ReadDirective to load graph edges from an external file.
+# The format specifier is optional but good practice.
+.read Edge(source, target) from "./inputs/graph_edges.csv" as "csv".
+
+# The iteration block is necessary for recursive definitions.
+# The rules inside will be run repeatedly until no new facts are generated.
+.iterate {
+    # Base Case: A direct edge from X to Y is a path.
+    # The first time through, this rule populates the Path relation
+    # with all the facts from the Edge relation.
+    Path(x, y) :- Edge(x, y).
+
+    # Recursive Step: If there is a path from X to Y, and a direct
+    # edge from Y to Z, then there is a path from X to Z.
+    # In subsequent iterations, this rule finds longer and longer paths.
+    Path(x, z) :- Path(x, y), Edge(y, z).
+}
+
+# Write all discovered paths to a file.
+.write Path to "/tmp/all_paths.jsonl" as "jsonl".

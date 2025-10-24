@@ -18,7 +18,13 @@ impl<'a> Parser<'a> {
     }
 
     pub fn source_line(&self, token: &Token) -> String {
-        self.source.lines().nth(token.span.line).unwrap().to_string()
+        match self.source.lines().nth(token.span.line -1) {
+            Some(line) => line.to_string(),
+            None => panic!(
+                "Parser Error: Cannot retrieve the line of the token in {}:{}:{}",
+                  token.span.line, token.span.start, token.span.end
+            )
+        }
     }
 
     pub fn parse_list<T, F>(&mut self, mut parse_fn: F) -> ParseResult<Vec<T>>
@@ -60,7 +66,7 @@ impl<'a> Parser<'a> {
             Err(self.unexpected_token_error(&token, &format!("'{:?}'", expected)))
         }
     }
-    
+
     pub fn peek_is(&mut self, kind: &TokenKind) -> ParseResult<bool> {
         Ok(self.peek().map_or(false, |t| std::mem::discriminant(&t.kind) == std::mem::discriminant(kind)))
     }

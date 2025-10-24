@@ -1,0 +1,21 @@
+# ==========================================================
+# Example 1: Basic Facts, Rules, and I/O
+# ==========================================================
+
+# Define some base data directly in the program as facts.
+# A fact is a ground atom (an atom with no variables).
+Employee("Alice", 34, "Engineering").
+Employee("Bob", 28, "Marketing").
+Employee("Charlie", 45, "Engineering").
+Employee("Diane", 29, "HR").
+
+# A rule to define who qualifies as a "Senior" employee.
+# Head: SeniorEmployee(name, department)
+# Body: Employee(name, age, department), age > 30
+# This rule reads: "A person with 'name' and 'department' is a SeniorEmployee if
+# there exists an Employee fact with that 'name', 'age', and 'department',
+# AND their 'age' is greater than 30."
+SeniorEmployee(name, department) :- Employee(name, age, department), age > 30.
+
+# Write the derived SeniorEmployee relation to a CSV file.
+.write SeniorEmployee to "/tmp/senior_employees.csv" as "csv".

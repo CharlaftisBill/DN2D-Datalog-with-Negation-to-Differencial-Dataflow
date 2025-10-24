@@ -1,6 +1,6 @@
 use serde::Serialize;
 
-use crate::{ast::{parser::ParseResult, Constant, Expression, Identifier, Parsable, Parser}, lexer::TokenKind};
+use crate::{ast::{parser::ParseResult, Expression, Identifier, Parsable, Parser}, lexer::TokenKind};
 
 #[derive(Debug, Serialize)]
 pub struct Atom {
@@ -23,29 +23,5 @@ impl Parsable<Atom> for Atom {
         parser.expect(TokenKind::RParen)?;
 
         Ok(Atom { name, terms })
-    }
-}
-
-#[derive(Debug, Serialize)]
-pub struct GroundAtom {
-    pub name: Identifier,
-    pub values: Vec<Constant>,
-}
-
-impl Parsable<GroundAtom> for GroundAtom {
-    fn parse(parser :&mut Parser<'_>) -> ParseResult<GroundAtom> {
-        
-       let name = Identifier::parse(parser)?;
-        parser.expect(TokenKind::LParen)?;
-
-        let values = if parser.peek_is_not(&TokenKind::RParen)? {
-            parser.parse_list(Constant::parse)?
-        } else {
-            Vec::new()
-        };
-
-        parser.expect(TokenKind::RParen)?;
-
-        Ok(GroundAtom { name, values })
     }
 }

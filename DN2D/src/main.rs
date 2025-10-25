@@ -10,6 +10,7 @@ mod analisis;
 // Bring items into scope
 use ast::Parser;
 use lexer::Lexer;
+use crate::analisis::scc::ValidationError;
 use crate::cli::Command;
 
 use crate::ast::Parsable;
@@ -40,37 +41,44 @@ fn main() {
     cli.ast_as_json.handle(cli::export_to::to_json_str(&program_ast));
 
     let validator = analisis::Validator::new(&program_ast);
-    match validator.validate() {
-        Ok(()) => {
+    let execution_plan = match validator.validate() {
+        Ok(plan) => {
             println!("\n\x1b[32mValidation PASSED\x1b[0m");
+            plan
         }
         Err(errors) => {
-            println!("\n\x1b[31mValidation ERROR(s):\x1b[0m");
-
-            let padding =source_code.lines().count().to_string().len();
-            errors.iter().for_each(
-                |e|{
-                    for index in e.span.line_start-1..e.span.line_end {
-                        print!("{:^width$}┃ {}",
-                            index + 1,
-                            source_code.lines().nth(index).unwrap(),
-                            width = padding
-                        );
-
-                        if index == e.span.line_end -1 {
-                            println!(" \x1b[31m{}\x1b[0m", e.error_message);
-                            println!("{:^width$}┃", 
-                                "⋮",
-                                width = padding,
-                            );
-                        }else{
-                            println!();
-                        }
-                    }
-                }
-            );
+            validation_error(source_code, errors);
+            return;
         }
-    }
+    };
+
+}
+
+fn validation_error(source_code: String, errors: Vec<ValidationError<'_>>) {
+    println!("\n\x1b[31mValidation ERROR(s):\x1b[0m");
+
+    let padding =source_code.lines().count().to_string().len();
+    errors.iter().for_each(
+        |e|{
+            for index in e.span.line_start-1..e.span.line_end {
+                print!("{:^width$}┃ {}",
+                    index + 1,
+                    source_code.lines().nth(index).unwrap(),
+                    width = padding
+                );
+
+                if index == e.span.line_end -1 {
+                    println!(" \x1b[31m{}\x1b[0m", e.error_message);
+                    println!("{:^width$}┃", 
+                        "⋮",
+                        width = padding,
+                    );
+                }else{
+                    println!();
+                }
+            }
+        }
+    );
 }
 
 fn lex(source_code: &String) -> Vec<Token>{

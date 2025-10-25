@@ -1,6 +1,6 @@
-use petgraph::algo::tarjan_scc;
 use std::collections::HashMap;
 use petgraph::graph::{Graph, NodeIndex};
+use petgraph::algo::{tarjan_scc, toposort};
 
 use crate::ast::{RuleSpan, rule_or_fact::Rule, Literal, Program, RuleOrFact, Statement};
 
@@ -36,11 +36,11 @@ impl<'a> Validator<'a> {
         state
     }
 
-    pub fn validate(&self) -> Result<(), Vec<ValidationError<'a>>> {
+    pub fn validate(&self) -> Result<Vec<Vec<NodeIndex>>, Vec<ValidationError<'a>>> {
         let sccs = tarjan_scc(&self.dependency_graph);
         let mut errors: Vec<ValidationError<'a>> = Vec::new();
 
-        for scc in sccs {
+        for scc in &sccs {
             let is_recursive = scc.len() > 1 || 
                 (scc.len() == 1 && self.dependency_graph.find_edge(scc[0], scc[0]).is_some());
 
@@ -49,11 +49,44 @@ impl<'a> Validator<'a> {
             }
         }
         
-        if errors.is_empty() {
-            Ok(())
-        } else {
-            Err(errors)
+        if !errors.is_empty() {
+            return Err(errors);
         }
+
+        let mut node_to_scc_id = HashMap::new();
+        for (i, scc) in sccs.iter().enumerate() {
+            for &node in scc {
+                node_to_scc_id.insert(node, i);
+            }
+        }
+
+        let mut scc_graph = Graph::<usize, ()>::new();
+        let scc_nodes: Vec<_> = (0..sccs.len())
+            .map(|i| scc_graph.add_node(i))
+            .collect();
+
+        for edge in self.dependency_graph.raw_edges() {
+            let source_scc_id = *node_to_scc_id.get(&edge.source()).unwrap();
+            let target_scc_id = *node_to_scc_id.get(&edge.target()).unwrap();
+
+            if source_scc_id != target_scc_id {
+                scc_graph.add_edge(scc_nodes[source_scc_id], scc_nodes[target_scc_id], ());
+            }
+        }
+
+        let sorted_scc_indices = toposort(&scc_graph, None)
+            .unwrap();
+
+        let execution_plan: Vec<Vec<NodeIndex>> = sorted_scc_indices
+            .into_iter()
+            .rev() 
+            .map(|scc_node_index| {
+                let scc_id = scc_graph[scc_node_index];
+                sccs[scc_id].clone()
+            })
+            .collect();
+
+        Ok(execution_plan)
     }
 
     fn validate_recursive_scc(&self, scc: &[NodeIndex], errors: &mut Vec<ValidationError<'a>>) {

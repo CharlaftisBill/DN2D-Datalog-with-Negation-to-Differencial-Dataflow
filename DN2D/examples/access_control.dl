@@ -1,0 +1,115 @@
+# =============================================================================
+# Complex Datalog Program: Cloud Infrastructure Access Control
+# =============================================================================
+# This program determines which users have what level of access to specific
+# cloud resources based on a complex set of rules.
+# =============================================================================
+
+
+# Section 1: Input Relations (The State of the World)
+# -----------------------------------------------------------------------------
+# These facts represent the configured state of our cloud environment.
+
+# Direct permissions granted to a user for a specific resource.
+# AccessLevel can be "ReadOnly", "ReadWrite", "Admin".
+.read DirectPermission(user, resource, access_level) from "./inputs/direct_perms.csv" as "csv".
+
+# Users belonging to specific groups.
+.read GroupMember(user, group_name) from "./inputs/group_members.csv" as "csv".
+
+# Permissions granted to entire groups.
+.read GroupPermission(group_name, resource, access_level) from "./inputs/group_perms.csv" as "csv".
+
+# The hierarchy of resources. e.g., a VM is part of a Project.
+# Resource(child_resource, parent_resource).
+.read ResourceHierarchy(child, parent) from "./inputs/resource_hierarchy.csv" as "csv".
+
+# Policy definitions that grant access based on resource tags.
+# Policy(policy_name, tag_key, tag_value, access_level).
+.read TagPolicy(policy_name, tag_key, tag_value, access_level) from "./inputs/tag_policies.csv" as "csv".
+
+# The tags applied to each resource.
+# Tag(resource, tag_key, tag_value).
+.read ResourceTag(resource, key, value) from "./inputs/resource_tags.csv" as "csv".
+
+# Some resources are publicly accessible.
+.read IsPublic(resource) from "./inputs/public_resources.csv" as "csv".
+
+
+# Section 2: First Recursive Block - Resource Containment
+# -----------------------------------------------------------------------------
+# We need to compute the full transitive closure of the resource hierarchy.
+# This is a standard recursive pattern, correctly isolated in its own block.
+# Your SCC analysis will find `{ContainedIn}` as a recursive component.
+
+.iterate {
+    # Base Case: A resource is contained in its direct parent.
+    ContainedIn(child, parent) :- ResourceHierarchy(child, parent).
+
+    # Recursive Step: If C is in P1, and P1 is in P2, then C is in P2.
+    ContainedIn(child, grandparent) :- ContainedIn(child, parent), ResourceHierarchy(parent, grandparent).
+}
+
+
+# Section 3: Second, Larger Recursive Block - Effective Permissions
+# -----------------------------------------------------------------------------
+# This is the core of the access control logic. It computes `HasAccess`, which
+# is a complex, multi-faceted, and recursive concept. Your SCC analysis will
+# identify `{UserPermission, EffectivePermission, HasAccess}` as a large,
+
+# mutually recursive component.
+
+.iterate {
+    # --- A: UserPermission ---
+    # This relation gathers all non-hierarchical permissions for a user.
+    
+    # A user has permission if it's granted directly.
+    UserPermission(user, resource, level) :- DirectPermission(user, resource, level).
+    
+    # A user has permission if they are in a group that has that permission.
+    UserPermission(user, resource, level) :- GroupMember(user, group), GroupPermission(group, resource, level).
+    
+    # A user has permission if a resource they want to access has a tag that matches a policy.
+    UserPermission(user, resource, level) :- TagPolicy(policy, key, value, level), ResourceTag(resource, key, value).
+
+    # --- B: EffectivePermission ---
+    # This relation includes permissions inherited up the resource hierarchy.
+    # It depends on UserPermission and the `ContainedIn` relation computed earlier.
+    EffectivePermission(user, resource, level) :- UserPermission(user, resource, level).
+    EffectivePermission(user, child_res, level) :- ContainedIn(child_res, parent_res), EffectivePermission(user, parent_res, level).
+
+    # --- C: HasAccess (The Final Check) ---
+    # This boolean relation simplifies the result. It also introduces mutual recursion.
+    # A user has access if they have *any* effective permission.
+    HasAccess(user, resource) :- EffectivePermission(user, resource, level).
+    
+    # A user has access if the resource is public.
+    HasAccess(user, resource) :- IsPublic(resource).
+    
+    # A user can get access to a parent if they have "Admin" on a child. (Mutual Recursion!)
+    # This creates the dependency: `HasAccess -> EffectivePermission`, closing the loop.
+    EffectivePermission(user, parent_res, "Admin") :- HasAccess(user, child_res), ContainedIn(child_res, parent_res).
+}
+
+
+# Section 4: Final Aggregations and Reporting
+# -----------------------------------------------------------------------------
+# These are non-recursive rules that consume the results of the complex iterations.
+# They are correctly placed outside the loops.
+
+# Count how many resources each user has "Admin" access to.
+AdminCount(user, count(resource)) :- EffectivePermission(user, resource, "Admin").
+
+# Identify users who are members of more than 5 groups (potential privilege escalation risk).
+UserGroupCount(user, count(group)) :- GroupMember(user, group).
+PrivilegedUser(user) :- UserGroupCount(user, count), count > 5.
+
+# Find all users who can access the sensitive "prod-db-vm".
+CanAccessProdDb(user) :- HasAccess(user, "prod-db-vm").
+
+
+# Section 5: Outputs
+# -----------------------------------------------------------------------------
+.write AdminCount to "/tmp/admin_counts.csv" as "csv".
+.write PrivilegedUser to "/tmp/privileged_users.csv" as "csv".
+.write CanAccessProdDb to "/tmp/prod_db_access.csv" as "csv".

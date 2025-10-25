@@ -7,4 +7,5 @@
 
 Degree(node, count(edge)) :- Edge(node, edge).
 
+
 .write Degree to "/tmp/degrees.csv" as "csv_with_header".

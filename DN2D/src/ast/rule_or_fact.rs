@@ -9,9 +9,16 @@ pub enum RuleOrFact {
 }
 
 #[derive(Debug, Serialize)]
+pub struct  RuleSpan {
+    pub line_start      :usize,
+    pub line_end        :usize,
+}
+
+#[derive(Debug, Serialize)]
 pub struct Rule {
     pub head: Atom,
     pub body: Vec<Literal>,
+    pub span: RuleSpan,
 }
 
 #[derive(Debug, Serialize)]
@@ -22,6 +29,8 @@ pub struct Fact {
 impl Parsable<RuleOrFact> for RuleOrFact{
     fn parse(parser :&mut Parser<'_>) -> ParseResult<RuleOrFact> {
         
+        let rule_or_fact_span = parser.peek().unwrap().span;
+
         let head = Atom::parse(parser)?;
         let token = parser.consume().unwrap();
         
@@ -44,8 +53,14 @@ impl Parsable<RuleOrFact> for RuleOrFact{
                 body.push(Literal::parse(parser)?);
             }
 
+            let dot_span = parser.peek().unwrap().span;
+            let span = RuleSpan {
+                line_start      : rule_or_fact_span.line,
+                line_end        : dot_span.line,
+            };
             parser.expect(TokenKind::Dot)?;
-            return Ok(RuleOrFact::Rule(Rule { head, body }));
+
+            return Ok(RuleOrFact::Rule(Rule { head, body, span }));
         }
 
         if !is_dot {

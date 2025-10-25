@@ -17,7 +17,7 @@ pub mod parsable_trait;
 pub use atom::Atom;
 pub use parser::Parser;
 pub use literal::Literal;
-pub use rule_or_fact::RuleOrFact;
+pub use rule_or_fact::{RuleOrFact, RuleSpan};
 pub use program::Program;
 pub use constant::Constant;
 pub use statement::Statement;

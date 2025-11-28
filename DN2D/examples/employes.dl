@@ -1,0 +1,23 @@
+# ==========================================================
+# Three-Way Join (Chained Method)
+# ==========================================================
+
+# Use .read directives to define the input relations, which correspond to the InputSessions.
+.read Employee(emp_id, emp_name) from "./inputs/employees.csv" as "csv".
+.read Assignment(emp_id, dept_id) from "./inputs/assignments.csv"  as "csv".
+.read Department(dept_id, dept_name) from "./inputs/departments.csv"  as "csv".
+
+# --- Intermediate Rule ---
+# This rule corresponds to the first join in the Rust code (`emp_with_dept_id`).
+# It joins Assignment and Employee to link an employee's name to their department ID.
+# The `emp_id` variable is the join key.
+EmployeeInDept(dept_id, emp_name) :- Assignment(emp_id, dept_id), Employee(emp_id, emp_name).
+
+# --- Final Rule ---
+# This rule corresponds to the second join.
+# It joins our intermediate result with the Department relation to get the department's name.
+# The `dept_id` variable is the join key.
+Roster(dept_name, emp_name) :- EmployeeInDept(dept_id, emp_name), Department(dept_id, dept_name).
+
+# .write directive corresponds to the final .inspect() sink.
+.write Roster to "/tmp/roster.csv"  as "csv".

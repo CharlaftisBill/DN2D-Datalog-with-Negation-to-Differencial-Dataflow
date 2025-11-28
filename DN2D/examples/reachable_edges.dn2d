@@ -1,0 +1,13 @@
+
+
+
+.read Edge(From, To) from "./inputs/edges.csv" as "csv".
+
+.iterate {
+    Reachable(x, y) :- Edge(x, y).
+    Reachable(x, z) :- Reachable(x, y), Edge(y, z).
+}
+
+ReachCount(node, count(neighbor)) :- Reachable(node, neighbor).
+
+.write ReachCount to "stdout" as "ReachCount: {inspect(ReachCount)}".

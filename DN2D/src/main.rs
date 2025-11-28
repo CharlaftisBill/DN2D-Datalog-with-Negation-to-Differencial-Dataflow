@@ -41,7 +41,7 @@ fn main() {
     cli.ast_as_json.handle(cli::export_to::to_json_str(&program_ast));
 
     let validator = analisis::Validator::new(&program_ast);
-    let execution_plan = match validator.validate() {
+    let _execution_plan = match validator.validate_plan() {
         Ok(plan) => {
             println!("\n\x1b[32mValidation PASSED\x1b[0m");
             plan

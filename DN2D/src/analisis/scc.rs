@@ -36,7 +36,7 @@ impl<'a> Validator<'a> {
         state
     }
 
-    pub fn validate(&self) -> Result<Vec<Vec<NodeIndex>>, Vec<ValidationError<'a>>> {
+    pub fn validate_plan(&self) -> Result<Vec<Vec<NodeIndex>>, Vec<ValidationError<'a>>> {
         let sccs = tarjan_scc(&self.dependency_graph);
         let mut errors: Vec<ValidationError<'a>> = Vec::new();
 

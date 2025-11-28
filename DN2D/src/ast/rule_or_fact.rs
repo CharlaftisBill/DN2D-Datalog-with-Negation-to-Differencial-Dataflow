@@ -2,26 +2,26 @@ use serde::Serialize;
 
 use crate::{ast::{parser::ParseResult, Atom, Literal, Parsable, Parser}, lexer::TokenKind};
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
 pub enum RuleOrFact {
     Rule(Rule),
     Fact(Fact),
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
 pub struct  RuleSpan {
     pub line_start      :usize,
     pub line_end        :usize,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
 pub struct Rule {
     pub head: Atom,
     pub body: Vec<Literal>,
     pub span: RuleSpan,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
 pub struct Fact {
     pub head: Atom,
 }

@@ -2,7 +2,7 @@ use serde::Serialize;
 
 use crate::{ast::{parser::ParseResult, Parsable, Parser, RuleOrFact}, lexer::TokenKind};
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
 pub struct IterationBlock {
     pub rules: Vec<RuleOrFact>,
 }

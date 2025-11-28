@@ -2,7 +2,7 @@ use serde::Serialize;
 
 use crate::{ast::{parser::ParseResult, Identifier, Parsable, Parser}, lexer::TokenKind};
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
 pub struct ReadDirective {
     pub name: Identifier,
     pub columns: Vec<Identifier>,
@@ -32,7 +32,7 @@ impl Parsable<ReadDirective> for  ReadDirective {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
 pub struct WriteDirective {
     pub name: Identifier,
     pub path: String,

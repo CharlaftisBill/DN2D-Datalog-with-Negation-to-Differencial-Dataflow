@@ -2,7 +2,7 @@ use serde::Serialize;
 
 use crate::ast::{parser::ParseResult, Parsable, Parser, Statement};
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
 pub struct Program {
     pub statements: Vec<Statement>,
 }

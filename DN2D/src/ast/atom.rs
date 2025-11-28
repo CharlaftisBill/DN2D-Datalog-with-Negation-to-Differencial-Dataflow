@@ -2,7 +2,7 @@ use serde::Serialize;
 
 use crate::{ast::{parser::ParseResult, Expression, Identifier, Parsable, Parser}, lexer::TokenKind};
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
 pub struct Atom {
     pub name: Identifier,
     pub terms: Vec<Expression>,

@@ -1,23 +1,21 @@
 use std::fs;
 use std::process;
 
-// Declare the modules
 mod ast;
 mod cli;
 mod lexer;
 mod analisis;
 
-// Bring items into scope
 use ast::Parser;
 use lexer::Lexer;
-use crate::analisis::scc::ValidationError;
+use crate::analisis::planner::OrderedProgram;
 use crate::cli::Command;
 
 use crate::ast::Parsable;
 use crate::ast::Program;
 use crate::lexer::Token;
 
-fn main() {
+fn main() -> Result<(), Box<dyn std::error::Error>>{
     let cli = Command::new();
 
     let filename = cli.src_path
@@ -33,52 +31,13 @@ fn main() {
     let tokens = lex(&source_code);
     cli.lex_as_json.handle(cli::export_to::to_json_str(&tokens));
 
-    let mut parser = Parser::new(&source_code, tokens);
-    let program_ast = match Program::parse(&mut parser) {
-        Ok(ast) => ast,
-        Err(e) => panic!("{}", e)
-    };
-    cli.ast_as_json.handle(cli::export_to::to_json_str(&program_ast));
+    let program_skeleton: Program   = parse(&source_code, tokens)?;
+    cli.ast_as_json.handle(cli::export_to::to_json_str(&program_skeleton));
 
-    let validator = analisis::Validator::new(&program_ast);
-    let _execution_plan = match validator.validate_plan() {
-        Ok(plan) => {
-            println!("\n\x1b[32mValidation PASSED\x1b[0m");
-            plan
-        }
-        Err(errors) => {
-            validation_error(source_code, errors);
-            return;
-        }
-    };
+    let _ordered_program = validate_and_plan(&source_code, program_skeleton)?;
 
-}
 
-fn validation_error(source_code: String, errors: Vec<ValidationError<'_>>) {
-    println!("\n\x1b[31mValidation ERROR(s):\x1b[0m");
-
-    let padding =source_code.lines().count().to_string().len();
-    errors.iter().for_each(
-        |e|{
-            for index in e.span.line_start-1..e.span.line_end {
-                print!("{:^width$}┃ {}",
-                    index + 1,
-                    source_code.lines().nth(index).unwrap(),
-                    width = padding
-                );
-
-                if index == e.span.line_end -1 {
-                    println!(" \x1b[31m{}\x1b[0m", e.error_message);
-                    println!("{:^width$}┃", 
-                        "⋮",
-                        width = padding,
-                    );
-                }else{
-                    println!();
-                }
-            }
-        }
-    );
+    Ok(())
 }
 
 fn lex(source_code: &String) -> Vec<Token>{
@@ -91,4 +50,17 @@ fn lex(source_code: &String) -> Vec<Token>{
         }
     };
     tokens
+}
+
+fn parse(source_code: &String, tokens: Vec<Token>) -> Result<Program, Box<dyn std::error::Error>>{
+    let mut parser = Parser::new(&source_code, tokens);
+    let program_ast   = Program::parse(&mut parser)?;
+    
+    Ok(program_ast)
+}
+
+fn validate_and_plan(source_code: &String, program_skeleton: Program) -> Result<OrderedProgram, Box<dyn std::error::Error>>{
+    let validator = analisis::Validator::new(&program_skeleton);
+    let planer = validator.validate(&source_code)?;
+    Ok(planer.plan())
 }

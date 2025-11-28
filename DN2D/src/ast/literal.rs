@@ -2,7 +2,7 @@ use serde::Serialize;
 
 use crate::{ast::{parser::ParseResult, Atom, Expression, Parsable, Parser}, lexer::TokenKind};
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
 pub enum Literal {
     Positive(Atom),
     Negative(Atom),

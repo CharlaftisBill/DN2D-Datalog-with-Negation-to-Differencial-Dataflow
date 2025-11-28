@@ -2,7 +2,7 @@ use serde::Serialize;
 
 use crate::{ast::{identifier::Identifier, parser::ParseResult, Aggregate, AggregateFunction, BinaryOperator, Constant, Parsable, Parser, ParserError, UnaryOperator}, lexer::TokenKind};
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
 pub enum Expression {
     Constant(Constant),
     Variable(Identifier),

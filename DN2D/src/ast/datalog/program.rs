@@ -1,6 +1,6 @@
 use serde::Serialize;
 
-use crate::ast::{parser::ParseResult, Parsable, Parser, Statement};
+use crate::ast::datalog::{parser::ParseResult, Parsable, Parser, Statement};
 
 #[derive(Debug, Serialize, Clone)]
 pub struct Program {

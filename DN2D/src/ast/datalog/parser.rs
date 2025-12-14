@@ -1,6 +1,6 @@
 use std::{iter::Peekable, vec};
 
-use crate::{ast::ParserError, lexer::{Span, Token, TokenKind}};
+use crate::{ast::datalog::ParserError, lexer::{Span, Token, TokenKind}};
 
 pub type ParseResult<T> = Result<T, ParserError>;
 

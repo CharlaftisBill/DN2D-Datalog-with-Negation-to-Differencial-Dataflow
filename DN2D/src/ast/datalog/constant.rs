@@ -1,6 +1,6 @@
 use serde::Serialize;
 
-use crate::{ast::{parser::ParseResult, Parsable, Parser}, lexer::TokenKind};
+use crate::{ast::datalog::{parser::ParseResult, Parsable, Parser}, lexer::TokenKind};
 
 #[derive(Debug, Serialize, Clone, PartialEq)]
 pub enum Constant {

@@ -13,6 +13,9 @@ pub struct Command {
     #[arg(long, default_value = "none")]
     pub ast_as_json: ExportTo,
 
+    #[arg(long, default_value = "none")]
+    pub ordered_ast_as_json: ExportTo,
+
     #[arg()]
     pub src_path: PathBuf,
 }

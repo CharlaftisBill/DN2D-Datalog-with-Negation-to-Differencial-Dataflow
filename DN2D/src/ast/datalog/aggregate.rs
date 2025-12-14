@@ -1,6 +1,6 @@
 use serde::Serialize;
 
-use crate::ast::Identifier;
+use crate::ast::datalog::Identifier;
 
 #[derive(Debug, Serialize, Clone)]
 pub enum AggregateFunction { Count, Sum, Min, Max, Avg }

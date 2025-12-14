@@ -1,6 +1,6 @@
 use serde::Serialize;
 
-use crate::{ast::{parser::ParseResult, Parsable, Parser, RuleOrFact}, lexer::TokenKind};
+use crate::{ast::datalog::{parser::ParseResult, Parsable, Parser, RuleOrFact}, lexer::TokenKind};
 
 #[derive(Debug, Serialize, Clone)]
 pub struct IterationBlock {

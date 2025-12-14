@@ -3,7 +3,7 @@ use petgraph::graph::{Graph, NodeIndex};
 use std::collections::HashMap;
 
 use crate::analisis::Planner;
-use crate::ast::{rule_or_fact::Rule, Literal, Program, RuleOrFact, RuleSpan, Statement};
+use crate::ast::datalog::{rule_or_fact::Rule, Literal, Program, RuleOrFact, RuleSpan, Statement};
 
 struct RuleInfo<'a> {
     rule: &'a Rule,

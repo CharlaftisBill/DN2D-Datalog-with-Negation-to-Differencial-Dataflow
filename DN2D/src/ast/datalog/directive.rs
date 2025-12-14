@@ -1,6 +1,6 @@
 use serde::Serialize;
 
-use crate::{ast::{parser::ParseResult, Identifier, Parsable, Parser}, lexer::TokenKind};
+use crate::{ast::datalog::{parser::ParseResult, Identifier, Parsable, Parser}, lexer::TokenKind};
 
 #[derive(Debug, Serialize, Clone)]
 pub struct ReadDirective {

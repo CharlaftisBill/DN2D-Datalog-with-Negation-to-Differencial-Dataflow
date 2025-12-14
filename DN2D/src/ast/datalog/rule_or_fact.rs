@@ -1,6 +1,6 @@
 use serde::Serialize;
 
-use crate::{ast::{parser::ParseResult, Atom, Literal, Parsable, Parser}, lexer::TokenKind};
+use crate::{ast::datalog::{parser::ParseResult, Atom, Literal, Parsable, Parser}, lexer::TokenKind};
 
 #[derive(Debug, Serialize, Clone)]
 pub enum RuleOrFact {

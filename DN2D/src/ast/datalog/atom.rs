@@ -1,6 +1,6 @@
 use serde::Serialize;
 
-use crate::{ast::{parser::ParseResult, Expression, Identifier, Parsable, Parser}, lexer::TokenKind};
+use crate::{ast::datalog::{Expression, Identifier, Parsable, Parser, parser::ParseResult}, lexer::TokenKind};
 
 #[derive(Debug, Serialize, Clone)]
 pub struct Atom {

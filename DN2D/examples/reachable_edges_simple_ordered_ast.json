@@ -1,0 +1,203 @@
+{
+  "inputs": [
+    {
+      "name": "Edge",
+      "columns": [
+        "From",
+        "To"
+      ],
+      "path": "./inputs/edges.csv",
+      "format": "csv"
+    }
+  ],
+  "facts": [
+    {
+      "head": {
+        "name": "Edge",
+        "terms": [
+          {
+            "Constant": {
+              "String": "a"
+            }
+          },
+          {
+            "Constant": {
+              "String": "b"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "head": {
+        "name": "Edge",
+        "terms": [
+          {
+            "Constant": {
+              "String": "b"
+            }
+          },
+          {
+            "Constant": {
+              "String": "c"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "head": {
+        "name": "Edge",
+        "terms": [
+          {
+            "Constant": {
+              "String": "c"
+            }
+          },
+          {
+            "Constant": {
+              "String": "a"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "strata": [
+    {
+      "is_recursive": true,
+      "relation_names": [
+        "Reachable"
+      ],
+      "rules": [
+        {
+          "head": {
+            "name": "Reachable",
+            "terms": [
+              {
+                "Variable": "x"
+              },
+              {
+                "Variable": "y"
+              }
+            ]
+          },
+          "body": [
+            {
+              "Positive": {
+                "name": "Edge",
+                "terms": [
+                  {
+                    "Variable": "x"
+                  },
+                  {
+                    "Variable": "y"
+                  }
+                ]
+              }
+            }
+          ],
+          "span": {
+            "line_start": 8,
+            "line_end": 8
+          }
+        },
+        {
+          "head": {
+            "name": "Reachable",
+            "terms": [
+              {
+                "Variable": "x"
+              },
+              {
+                "Variable": "z"
+              }
+            ]
+          },
+          "body": [
+            {
+              "Positive": {
+                "name": "Reachable",
+                "terms": [
+                  {
+                    "Variable": "x"
+                  },
+                  {
+                    "Variable": "y"
+                  }
+                ]
+              }
+            },
+            {
+              "Positive": {
+                "name": "Edge",
+                "terms": [
+                  {
+                    "Variable": "y"
+                  },
+                  {
+                    "Variable": "z"
+                  }
+                ]
+              }
+            }
+          ],
+          "span": {
+            "line_start": 9,
+            "line_end": 9
+          }
+        }
+      ]
+    },
+    {
+      "is_recursive": false,
+      "relation_names": [
+        "ReachCount"
+      ],
+      "rules": [
+        {
+          "head": {
+            "name": "ReachCount",
+            "terms": [
+              {
+                "Variable": "node"
+              },
+              {
+                "Aggregate": {
+                  "func": "Count",
+                  "arg": "neighbor"
+                }
+              }
+            ]
+          },
+          "body": [
+            {
+              "Positive": {
+                "name": "Reachable",
+                "terms": [
+                  {
+                    "Variable": "node"
+                  },
+                  {
+                    "Variable": "neighbor"
+                  }
+                ]
+              }
+            }
+          ],
+          "span": {
+            "line_start": 12,
+            "line_end": 12
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "ReachCount",
+      "path": "stdout",
+      "format": "ReachCount: {:?}"
+    }
+  ]
+}

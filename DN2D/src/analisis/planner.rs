@@ -1,26 +1,30 @@
 use petgraph::algo::toposort;
 use petgraph::graph::{Graph, NodeIndex};
+use serde::Serialize;
 use std::collections::HashMap;
 
 use crate::analisis::Validator;
-use crate::ast::rule_or_fact::Rule;
-use crate::ast::{Program, ReadDirective, RuleOrFact, Statement, WriteDirective};
+use crate::ast::datalog::rule_or_fact::{Fact, Rule};
+use crate::ast::datalog::{ReadDirective, RuleOrFact, Statement, WriteDirective};
 
 pub struct Planner<'a> {
-    valid_program: &'a Validator<'a>,
-    sccs: Vec<Vec<NodeIndex>>,
+    valid_program   : &'a Validator<'a>,
+    sccs            : Vec<Vec<NodeIndex>>,
 }
 
+#[derive(Debug, Serialize, Clone)]
 pub struct Stratum {
-    pub is_recursive: bool,
-    pub relation_names: Vec<String>,
-    pub rules: Vec<Rule>,
+    pub is_recursive    : bool,
+    pub relation_names  : Vec<String>,
+    pub rules           : Vec<Rule>,
 }
 
+#[derive(Debug, Serialize, Clone)]
 pub struct OrderedProgram {
-    pub inputs: Vec<ReadDirective>,
-    pub strata: Vec<Stratum>,
-    pub outputs: Vec<WriteDirective>,
+    pub inputs  : Vec<ReadDirective>,
+    pub facts   : Vec<Fact>,
+    pub strata  : Vec<Stratum>,
+    pub outputs : Vec<WriteDirective>,
 }
 
 type ExecutionPlan = Vec<Vec<NodeIndex>>;
@@ -37,17 +41,19 @@ impl<'a> Planner<'a> {
         let execution_plan: ExecutionPlan = self.make_execution_plan();
 
         let mut inputs = Vec::new();
+        let mut facts = Vec::new();
         let mut outputs = Vec::new();
         
         let mut rules_as_map: HashMap<String, Vec<Rule>> = HashMap::new();
         for stmt in &self.valid_program.ast.statements {
             match stmt {
                 Statement::Read(r) => inputs.push(r.clone()),
+                Statement::Fact(f) => facts.push(f.clone()),
                 Statement::Write(w) => outputs.push(w.clone()),
                 Statement::Rule(r) => {
                     rules_as_map.entry(r.head.name.0.clone())
                         .or_default().push(r.clone());
-                }
+                },
                 Statement::Iterate(block) => {
                     for wrapped in &block.rules {
                         if let RuleOrFact::Rule(r) = wrapped {
@@ -56,7 +62,6 @@ impl<'a> Planner<'a> {
                         }
                     }
                 }
-                _ => {}
             }
         }
 
@@ -64,6 +69,7 @@ impl<'a> Planner<'a> {
         
         OrderedProgram {
             inputs,
+            facts,
             strata,
             outputs,
         }

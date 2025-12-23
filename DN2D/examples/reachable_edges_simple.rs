@@ -1,16 +1,19 @@
 use differential_dataflow::input::InputSession;
 use differential_dataflow::operators::*;
 
+// input types
+type EdgeInputData = (String, String);
+
 fn main() {
     timely::execute::execute_from_args(std::env::args(), |worker| {
         
         // 1. Create Input (Corresponding to Facts + .read)
-        let mut edge_as_input = InputSession::<u32, (String, String), isize>::new();
+        let mut edge_as_input = InputSession::<u32, EdgeInputData, isize>::new();
         let mut probe = timely::dataflow::ProbeHandle::new();
 
         worker.dataflow(|scope| {
             // Convert input to a Collection
-            let edge_as_collection = edge_as_input.to_collection(scope);
+            let edge_as_collection: differential_dataflow::Collection<timely::dataflow::scopes::Child<'_, timely::worker::Worker<timely::communication::Allocator>, u32>, Vec<((String, String), u32, isize)>> = edge_as_input.to_collection(scope);
 
             // --- The .iterate block ---
             // Reachable(x, z) :- Reachable(x, y), Edge(y, z).

@@ -1,11 +1,12 @@
 use serde::Serialize;
 
-use crate::{ast::datalog::{parser::ParseResult, Identifier, Parsable, Parser}, lexer::TokenKind};
+use crate::{ast::datalog::{Identifier, Parsable, Parser, RecordField, parser::ParseResult}, lexer::TokenKind};
+
 
 #[derive(Debug, Serialize, Clone)]
 pub struct ReadDirective {
     pub name: Identifier,
-    pub columns: Vec<Identifier>,
+    pub columns: Vec<RecordField>,
     pub path: String,
     pub format: String,
 }
@@ -17,7 +18,7 @@ impl Parsable<ReadDirective> for  ReadDirective {
         let name = Identifier::parse(parser)?;
 
         parser.expect(TokenKind::LParen)?;
-        let columns =parser.parse_list(Identifier::parse)?;
+        let columns =parser.parse_list(RecordField::parse)?;
 
         parser.expect(TokenKind::RParen)?;
         parser.expect(TokenKind::From)?;

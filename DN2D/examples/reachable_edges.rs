@@ -2,10 +2,15 @@ use differential_dataflow::operators::*;
 use differential_dataflow::input::InputSession;
 use differential_dataflow::operators::arrange::ArrangeByKey;
 
+// input types
+type EdgeInputData = (String, String);
+
 fn main() {
     timely::execute::execute_from_args(std::env::args(), |worker| {
 
-        let mut edges_in = InputSession::<i32, (String, String), isize>::new();
+        // input sessions
+        let mut edges_in = InputSession::<isize, EdgeInputData, isize>::new();
+        
         let mut probe = timely::dataflow::ProbeHandle::new();
 
         worker.dataflow(|scope| {

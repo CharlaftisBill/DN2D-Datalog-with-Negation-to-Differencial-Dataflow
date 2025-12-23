@@ -10,6 +10,17 @@ pub enum Constant {
     Boolean(bool),
 }
 
+impl Constant{
+    pub fn value(&self) -> String {
+        match self {
+            Constant::String(value) => value.clone(), 
+            Constant::Integer(value)   => value.to_string(),
+            Constant::Boolean(value)  => value.to_string(),
+            Constant::Float(value)     => value.to_string()
+        }
+    }
+}
+
 impl Parsable<Constant> for Constant{
     fn parse(parser :&mut Parser<'_>) -> ParseResult<Constant> {
 
@@ -23,6 +34,17 @@ impl Parsable<Constant> for Constant{
             TokenKind::String(s) => Ok(Constant::String(s)),
             TokenKind::Boolean(b) => Ok(Constant::Boolean(b)),
             _ => Err(parser.unexpected_token_error(&token, "a constant value (integer, string, etc.)")),
+        }
+    }
+}
+
+impl std::fmt::Display for Constant {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match &self {
+            Constant::String(_)   => write!(f, "String"), 
+            Constant::Integer(_)   => write!(f, "i64"),
+            Constant::Boolean(_)  => write!(f, "bool"),
+            Constant::Float(_) => write!(f, "ordered_float::OrderedFloat<f64>")
         }
     }
 }
